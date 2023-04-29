@@ -3,8 +3,8 @@ const std = @import("std");
 const raylib = @cImport({
     @cInclude("raylib.h");
 });
-var x: f32 = 320;
-var y: f32 = 240;
+var x: i32 = 320;
+var y: i32 = 240;
 pub fn main() !void {
     std.debug.print("Hello world!\n {}", .{raylib});
     const alphabet = "abcdefghijklmnopqrstuvwxyz";
@@ -15,18 +15,16 @@ pub fn main() !void {
         // match?
         // convert
         raylib.BeginDrawing();
-        if (raylib.IsKeyDown(raylib.KEY_LEFT)) {
-            x -= 1;
-        }
-        if (raylib.IsKeyDown(raylib.KEY_RIGHT)) {
-            x += 1;
-        }
-        if (raylib.IsKeyDown(raylib.KEY_UP)) {
-            y -= 1;
-        }
-        if (raylib.IsKeyDown(raylib.KEY_DOWN)) {
-            y += 1;
-        }
+        x += switch (raylib.GetKeyPressed()) {
+            raylib.KEY_LEFT => -1,
+            raylib.KEY_RIGHT => 1,
+            else => 0,
+        };
+        y += switch (raylib.GetKeyPressed()) {
+            raylib.KEY_UP => -1,
+            raylib.KEY_DOWN => 1,
+            else => 0,
+        };
         raylib.DrawText(alphabet, x, y, 11, raylib.BLACK);
         raylib.ClearBackground(raylib.WHITE);
         raylib.EndDrawing();
