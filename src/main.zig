@@ -6,21 +6,31 @@ const raylib = @cImport({
 var x: i32 = 320;
 var y: i32 = 240;
 
-const Alphabet = struct {
-    letters: *const [26]u8,
-    pub fn getRandomLetter(self: Alphabet) u8 {
-        const index = std.rand.limitRangeBiased(usize, 1, self.letters.len);
-        std.debug.print("printing random letter\n", .{});
-        return self.letters[index];
-    }
-};
+// const Alphabet = struct {
+//     letters: *const [26]u8,
+//     pub fn getRandomLetter(self: Alphabet) u8 {
+//         const msTimestamp: i64 = std.time.milliTimestamp();
+//         const rand = std.rand.DefaultPrng.init(@as(u64, msTimestamp));
+//         const letterIndex = rand.next_u32() % 26;
+//         return self.letters[letterIndex];
+//     }
+// };
 
 pub fn main() !void {
     // std.debug.print("Hello world!\n {}", .{raylib});
-    const alphabet = Alphabet{ .letters = "abcdefghijklmnopqrstuvwxyz" };
-    std.debug.print("letter: {}\n", .{alphabet.getRandomLetter()});
+    var prng = std.rand.DefaultPrng.init(blk: {
+        var seed: u64 = undefined;
+        try std.os.getrandom(std.mem.asBytes(&seed));
+        break :blk seed;
+    });
+
+    const alphabet = "abcdefghijklmnopqrstuvwxyz";
+    // std.debug.print("letter: {}\n", .{alphabet.getRandomLetter()});
     raylib.InitWindow(640, 480, "__MF");
 
+    const random = prng.random();
+    const index: usize = random.intRangeAtMost(usize, 0, alphabet.len);
+    const str = [1]u8{alphabet[index]};
     while (!raylib.WindowShouldClose()) {
         // Look into DrawTextEx
         // convert
@@ -35,7 +45,8 @@ pub fn main() !void {
             raylib.KEY_DOWN => 1,
             else => 0,
         };
-        // raylib.DrawText(alphabet.getRandomLetter(), x, y, 11, raylib.BLACK);
+        // std.debug.print("{s}\n", .{.{alphabet[index]}});
+        raylib.DrawText(&str, x, y, 16, raylib.BLACK);
         raylib.ClearBackground(raylib.WHITE);
         raylib.EndDrawing();
     }
