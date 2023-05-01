@@ -27,13 +27,12 @@ pub fn main() !void {
     const alphabet = "abcdefghijklmnopqrstuvwxyz";
     // std.debug.print("letter: {}\n", .{alphabet.getRandomLetter()});
     raylib.InitWindow(640, 480, "__MF");
+    raylib.SetWindowPosition(960, 1200);
 
     const random = prng.random();
     const index: usize = random.intRangeAtMost(usize, 0, alphabet.len);
     const str = [1]u8{alphabet[index]};
     while (!raylib.WindowShouldClose()) {
-        // Look into DrawTextEx
-        // convert
         raylib.BeginDrawing();
         x += switch (raylib.GetKeyPressed()) {
             raylib.KEY_LEFT => -1,
