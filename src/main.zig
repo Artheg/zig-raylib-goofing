@@ -16,36 +16,46 @@ var y: i32 = 240;
 //     }
 // };
 
+const Letter = struct { value: *const [1:0]u8, index: usize, x: i32, y: i32 };
+
 pub fn main() !void {
     // std.debug.print("Hello world!\n {}", .{raylib});
-    var prng = std.rand.DefaultPrng.init(blk: {
-        var seed: u64 = undefined;
-        try std.os.getrandom(std.mem.asBytes(&seed));
-        break :blk seed;
-    });
 
     const alphabet = "abcdefghijklmnopqrstuvwxyz";
-    // std.debug.print("letter: {}\n", .{alphabet.getRandomLetter()});
     raylib.InitWindow(640, 480, "__MF");
     raylib.SetWindowPosition(960, 1200);
 
-    const random = prng.random();
-    const index: usize = random.intRangeAtMost(usize, 0, alphabet.len);
-    const str = [1]u8{alphabet[index]};
+    const now = @intCast(u64, std.time.nanoTimestamp());
+    var prng = std.rand.DefaultPrng.init(now);
+    var letters: [10]Letter = undefined;
+    for (0..10) |i| {
+        const random = prng.random();
+        const letter_index: usize = random.uintAtMost(usize, alphabet.len);
+        std.debug.print("RANDOM INDEX: {}\n", .{letter_index});
+
+        const str = [1:0]u8{alphabet[letter_index]};
+        std.debug.print("while str is {s}\n", .{str});
+        std.debug.print("str.len is {}\n", .{str.len});
+        letters[i] = Letter{ .value = &str, .index = letter_index, .x = 100, .y = 30 * @intCast(i32, i) };
+    }
     while (!raylib.WindowShouldClose()) {
         raylib.BeginDrawing();
-        x += switch (raylib.GetKeyPressed()) {
-            raylib.KEY_LEFT => -1,
-            raylib.KEY_RIGHT => 1,
-            else => 0,
-        };
-        y += switch (raylib.GetKeyPressed()) {
-            raylib.KEY_UP => -1,
-            raylib.KEY_DOWN => 1,
-            else => 0,
-        };
-        // std.debug.print("{s}\n", .{.{alphabet[index]}});
-        raylib.DrawText(&str, x, y, 16, raylib.BLACK);
+        // x += switch (raylib.GetKeyPressed()) {
+        //     raylib.KEY_LEFT => -1,
+        //     raylib.KEY_RIGHT => 1,
+        //     else => 0,
+        // };
+        // y += switch (raylib.GetKeyPressed()) {
+        //     raylib.KEY_UP => -1,
+        //     raylib.KEY_DOWN => 1,
+        //     else => 0,
+        // };
+
+        for (letters) |letter| {
+            std.debug.print("---\n", .{});
+            std.debug.print("drawing letter {s}\n", .{letter.value});
+            raylib.DrawText(&alphabet[letter.index], letter.x, letter.y, 26, raylib.BLACK);
+        }
         raylib.ClearBackground(raylib.WHITE);
         raylib.EndDrawing();
     }
