@@ -6,27 +6,31 @@ const raylib = @cImport({
 var x: i32 = 320;
 var y: i32 = 240;
 
-var prng = std.rand.DefaultPrng.init(0);
-const random = prng.random();
-
-const Letter = struct { value: [2:0]u8, index: usize, x: i32, y: i32 };
-const letter_count = 10;
+const Letter = struct { value: [1:0]u8, index: u8, x: i32, y: i32 };
+const letter_count = 15;
+const font_size = 15;
 
 const alphabet = "abcdefghijklmnopqrstuvwxyz";
 pub fn main() !void {
+    var prng = std.rand.DefaultPrng.init(@intCast(u64, std.time.nanoTimestamp()));
+    const random = prng.random();
+
     raylib.InitWindow(640, 480, "__MF");
     raylib.SetWindowPosition(960, 1200);
 
-    const letters = createRandomLetters();
+    const letters = createRandomLetters(random);
     for (letters) |letter| {
         std.debug.print("---\n", .{});
         std.debug.print("drawing letter {s}\n", .{letter.value});
+        for (letter.value) |char| {
+            std.debug.print("u8: {}", .{char});
+        }
     }
     while (!raylib.WindowShouldClose()) {
         raylib.BeginDrawing();
 
         for (letters) |letter| {
-            raylib.DrawText(&letter.value, letter.x, letter.y, 26, raylib.BLACK);
+            raylib.DrawText(&letter.value, letter.x, letter.y, font_size, raylib.BLACK);
         }
         raylib.ClearBackground(raylib.WHITE);
         raylib.EndDrawing();
@@ -34,13 +38,13 @@ pub fn main() !void {
     raylib.CloseWindow();
 }
 
-fn createRandomLetters() [letter_count]Letter {
+fn createRandomLetters(random: std.rand.Random) [letter_count]Letter {
     var letters: [letter_count]Letter = undefined;
     for (0..letter_count) |i| {
-        const letter_index: usize = random.uintAtMost(usize, alphabet.len);
+        const letter_index = random.uintAtMost(u8, alphabet.len - 1);
         std.debug.print("RANDOM INDEX: {}\n", .{letter_index});
 
-        const str = [2:0]u8{ alphabet[letter_index], 0 };
+        const str = [1:0]u8{alphabet[letter_index]};
         std.debug.print("while str is {s}\n", .{str});
         // std.debug.print("str.len is {}\n", .{str.len});
         std.debug.print("i is {}\n", .{i});
