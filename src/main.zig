@@ -1,8 +1,6 @@
 const std = @import("std");
 
-const raylib = @cImport({
-    @cInclude("raylib.h");
-});
+const raylib = @import("raylib");
 var x: i32 = 320;
 var y: i32 = 240;
 
@@ -18,7 +16,7 @@ pub fn main() !void {
     raylib.InitWindow(640, 480, "__MF");
     raylib.SetWindowPosition(960, 1200);
 
-    const letters = createRandomLetters(random);
+    var letters = createRandomLetters(random);
     for (letters) |letter| {
         std.debug.print("---\n", .{});
         std.debug.print("drawing letter {s}\n", .{letter.value});
