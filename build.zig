@@ -1,5 +1,5 @@
 const std = @import("std");
-const raylib_build = @import("lib/raylib/src/build.zig");
+const raylib = @import("lib/raylib/build.zig");
 
 // Although this function looks imperative, note that its job is to
 // declaratively construct a build graph that will be executed by an external
@@ -24,8 +24,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-    const raylib = raylib_build.addRaylib(b, target, optimize);
-    exe.linkLibrary(raylib);
+    raylib.addTo(b, exe, target, std.builtin.Mode.Debug);
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
     // step when running `zig build`).
