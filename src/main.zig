@@ -9,6 +9,8 @@ var y: i32 = 240;
 const Letter = struct { value: [2:0]u8, index: u8, x: i32, y: i32, was_pressed: bool };
 const letter_count = 15;
 const font_size = 25;
+const screen_width = 640;
+const screen_height = 480;
 
 const alphabet = "abcdefghijklmnopqrstuvwxyz";
 pub fn main() !void {
@@ -28,11 +30,14 @@ pub fn main() !void {
         raylib.BeginDrawing();
 
         for (&letters) |*letter| {
-            if (raylib.IsKeyDown(letterToKey(letter.value[0])))
+            if (letter.was_pressed) continue;
+            if (raylib.IsKeyPressed(letterToKey(letter.value[0]))) {
                 letter.was_pressed = true;
-            if (!letter.was_pressed)
-                raylib.DrawText(&letter.value, letter.x, letter.y, font_size, raylib.BLACK);
+                break;
+            }
         }
+
+        for (letters) |letter| if (!letter.was_pressed) raylib.DrawText(&letter.value, letter.x, letter.y, font_size, raylib.WHITE);
 
         raylib.ClearBackground(raylib.DARKBLUE);
         raylib.EndDrawing();
@@ -50,14 +55,11 @@ pub fn main() !void {
 fn createRandomLetters(letters: *[letter_count]Letter, random: std.rand.Random) void {
     for (0..letters.len) |i| {
         const letter_index = random.uintAtMost(u8, alphabet.len - 1);
-        std.debug.print("RANDOM INDEX: {}\n", .{letter_index});
         const str = [2:0]u8{ alphabet[letter_index], 0 };
-        std.debug.print("while str is {s}\n", .{str});
-        std.debug.print("i is {}\n", .{i});
         const letter_struct = &letters[i];
         letter_struct.value = str;
         letter_struct.index = letter_index;
-        letter_struct.x = 106;
+        letter_struct.x = (screen_width - font_size) / 2;
         letter_struct.y = font_size * @intCast(i32, i);
         letter_struct.was_pressed = false;
     }
