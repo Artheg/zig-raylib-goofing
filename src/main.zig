@@ -6,7 +6,11 @@ const KeyboardKey = raylib.KeyboardKey;
 var x: i32 = 320;
 var y: i32 = 240;
 
-const Letter = struct { value: [2:0]u8, index: u8, x: i32, y: i32, was_pressed: bool };
+const Status = enum { PLAYING, GAME_OVER, MENU };
+const GameState = struct { hp: u8, status: Status };
+const Vector2 = raylib.Vector2;
+
+const Letter = struct { value: [2:0]u8, index: u8, position: Vector2, was_pressed: bool, damage: u8 };
 const letter_count = 15;
 const font_size = 25;
 const screen_width = 640;
@@ -14,6 +18,9 @@ const screen_height = 480;
 
 const alphabet = "abcdefghijklmnopqrstuvwxyz";
 pub fn main() !void {
+    var game_state = GameState{ .status = Status.PLAYING, .hp = 100 };
+    _ = game_state;
+
     var prng = std.rand.DefaultPrng.init(@intCast(u64, std.time.nanoTimestamp()));
     const random = prng.random();
 
@@ -37,7 +44,11 @@ pub fn main() !void {
             }
         }
 
-        for (letters) |letter| if (!letter.was_pressed) raylib.DrawText(&letter.value, letter.x, letter.y, font_size, raylib.WHITE);
+        for (&letters) |*letter| {
+            if (letter.was_pressed) continue;
+            // raylib.DrawText(&letter.value, letter.x, letter.y, font_size, raylib.WHITE);
+            raylib.DrawTextEx(raylib.GetFontDefault(), &letter.value, letter.position, font_size, 0.0, raylib.WHITE);
+        }
 
         raylib.ClearBackground(raylib.DARKBLUE);
         raylib.EndDrawing();
@@ -59,9 +70,8 @@ fn createRandomLetters(letters: *[letter_count]Letter, random: std.rand.Random) 
         const letter_struct = &letters[i];
         letter_struct.value = str;
         letter_struct.index = letter_index;
-        letter_struct.x = (screen_width - font_size) / 2;
-        letter_struct.y = font_size * @intCast(i32, i);
         letter_struct.was_pressed = false;
+        letter_struct.damage = 1;
     }
 }
 
