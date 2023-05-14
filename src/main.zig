@@ -18,8 +18,7 @@ const screen_height = 480;
 
 const alphabet = "abcdefghijklmnopqrstuvwxyz";
 pub fn main() !void {
-    var game_state = GameState{ .status = Status.PLAYING, .hp = 100 };
-    _ = game_state;
+    var game_state = GameState{ .status = Status.PLAYING, .hp = 20 };
 
     var prng = std.rand.DefaultPrng.init(@intCast(u64, std.time.nanoTimestamp()));
     const random = prng.random();
@@ -36,8 +35,24 @@ pub fn main() !void {
     while (!raylib.WindowShouldClose()) {
         raylib.BeginDrawing();
 
+        if (game_state.status == Status.GAME_OVER) {
+            raylib.ClearBackground(raylib.DARKBLUE);
+            raylib.DrawText("GAME OVER", screen_width / 2, screen_height / 2, font_size, raylib.WHITE);
+            raylib.EndDrawing();
+            continue;
+        }
+
         for (&letters) |*letter| {
             if (letter.was_pressed) continue;
+            if (letter.position.x <= 0.0) {
+                game_state.hp -= letter.damage;
+                letter.was_pressed = true; // TODO: other flag
+            }
+            if (game_state.hp <= 0) {
+                game_state.status = Status.GAME_OVER;
+                break;
+            }
+            letter.position.x -= 0.11; // TODO: make safe
             if (raylib.IsKeyPressed(letterToKey(letter.value[0]))) {
                 letter.was_pressed = true;
                 break;
@@ -72,6 +87,8 @@ fn createRandomLetters(letters: *[letter_count]Letter, random: std.rand.Random) 
         letter_struct.index = letter_index;
         letter_struct.was_pressed = false;
         letter_struct.damage = 1;
+        letter_struct.position.x = screen_width - @intToFloat(f32, font_size);
+        letter_struct.position.y = @intToFloat(f32, i * font_size);
     }
 }
 
