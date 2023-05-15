@@ -10,7 +10,7 @@ const Status = enum { PLAYING, GAME_OVER, MENU };
 const GameState = struct { hp: u8, status: Status };
 const Vector2 = raylib.Vector2;
 
-const Letter = struct { value: [2:0]u8, index: u8, position: Vector2, was_pressed: bool, damage: u8 };
+const Letter = struct { value: [2:0]u8, index: u8, position: Vector2, was_killed: bool, damage: u8, speed: f32, is_dead: bool };
 const letter_count = 15;
 const font_size = 25;
 const screen_width = 640;
@@ -31,10 +31,16 @@ pub fn main() !void {
     while (i < letter_count) : (i += 1) {
         letters[i] = std.mem.zeroes(Letter);
     }
+    var hpText = "HP:       ".*;
+
     createRandomLetters(&letters, random);
     while (!raylib.WindowShouldClose()) {
         raylib.BeginDrawing();
 
+        hpText[5] = game_state.hp;
+        raylib.DrawText(&hpText, 0, 0, font_size, raylib.WHITE);
+
+        // raylib.DrawText("HP: ", screen_width / 2, screen_height / 2, font_size, raylib.WHITE);
         if (game_state.status == Status.GAME_OVER) {
             raylib.ClearBackground(raylib.DARKBLUE);
             raylib.DrawText("GAME OVER", screen_width / 2, screen_height / 2, font_size, raylib.WHITE);
@@ -43,10 +49,10 @@ pub fn main() !void {
         }
 
         for (&letters) |*letter| {
-            if (letter.was_pressed) continue;
+            if (letter.was_killed) continue;
             if (letter.position.x <= 0.0) {
                 game_state.hp -= letter.damage;
-                letter.was_pressed = true; // TODO: other flag
+                letter.was_killed = true; // TODO: other flag
             }
             if (game_state.hp <= 0) {
                 game_state.status = Status.GAME_OVER;
@@ -54,13 +60,13 @@ pub fn main() !void {
             }
             letter.position.x -= 0.11; // TODO: make safe
             if (raylib.IsKeyPressed(letterToKey(letter.value[0]))) {
-                letter.was_pressed = true;
+                letter.was_killed = true;
                 break;
             }
         }
 
         for (&letters) |*letter| {
-            if (letter.was_pressed) continue;
+            if (letter.was_killed) continue;
             // raylib.DrawText(&letter.value, letter.x, letter.y, font_size, raylib.WHITE);
             raylib.DrawTextEx(raylib.GetFontDefault(), &letter.value, letter.position, font_size, 0.0, raylib.WHITE);
         }
@@ -69,7 +75,7 @@ pub fn main() !void {
         raylib.EndDrawing();
 
         const task_complete = for (letters) |letter| {
-            if (!letter.was_pressed) break false;
+            if (!letter.was_killed) break false;
         } else true;
         if (task_complete) {
             createRandomLetters(&letters, random);
@@ -85,7 +91,7 @@ fn createRandomLetters(letters: *[letter_count]Letter, random: std.rand.Random) 
         const letter_struct = &letters[i];
         letter_struct.value = str;
         letter_struct.index = letter_index;
-        letter_struct.was_pressed = false;
+        letter_struct.was_killed = false;
         letter_struct.damage = 1;
         letter_struct.position.x = screen_width - @intToFloat(f32, font_size);
         letter_struct.position.y = @intToFloat(f32, i * font_size);
