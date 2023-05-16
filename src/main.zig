@@ -38,7 +38,10 @@ pub fn main() !void {
         raylib.BeginDrawing();
 
         hpText[5] = game_state.hp;
-        raylib.DrawText(&hpText, 0, 0, font_size, raylib.WHITE);
+        var buf: [2 * 1024]u8 = undefined;
+        var fba = std.heap.FixedBufferAllocator.init(&buf);
+
+        raylib.DrawText(try raylib.TextFormat(fba.allocator(), "HP: {d}", .{game_state.hp}), 0, 0, font_size, raylib.WHITE);
 
         // raylib.DrawText("HP: ", screen_width / 2, screen_height / 2, font_size, raylib.WHITE);
         if (game_state.status == Status.GAME_OVER) {
