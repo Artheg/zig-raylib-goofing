@@ -18,11 +18,12 @@ const screen_height = 480;
 
 const alphabet = "abcdefghijklmnopqrstuvwxyz";
 pub fn main() !void {
-    var game_state = GameState{ .status = Status.PLAYING, .hp = 20 };
+    var game_state = GameState{ .status = Status.PLAYING, .hp = 200 };
 
     var prng = std.rand.DefaultPrng.init(@intCast(u64, std.time.nanoTimestamp()));
     const random = prng.random();
 
+    raylib.InitAudioDevice();
     raylib.InitWindow(640, 480, "__MF");
     raylib.SetWindowPosition(960, 1200);
 
@@ -31,19 +32,17 @@ pub fn main() !void {
     while (i < letter_count) : (i += 1) {
         letters[i] = std.mem.zeroes(Letter);
     }
-    var hpText = "HP:       ".*;
-
+    var buf: [8]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(&buf); // allocators?
+    // https://www.youtube.com/watch?v=vHWiDx_l4V0
     createRandomLetters(&letters, random);
+    const punchSound = raylib.LoadSound("assets/sounds/punch_2.mp3");
     while (!raylib.WindowShouldClose()) {
         raylib.BeginDrawing();
 
-        hpText[5] = game_state.hp;
-        var buf: [2 * 1024]u8 = undefined;
-        var fba = std.heap.FixedBufferAllocator.init(&buf);
-
+        fba.reset();
         raylib.DrawText(try raylib.TextFormat(fba.allocator(), "HP: {d}", .{game_state.hp}), 0, 0, font_size, raylib.WHITE);
 
-        // raylib.DrawText("HP: ", screen_width / 2, screen_height / 2, font_size, raylib.WHITE);
         if (game_state.status == Status.GAME_OVER) {
             raylib.ClearBackground(raylib.DARKBLUE);
             raylib.DrawText("GAME OVER", screen_width / 2, screen_height / 2, font_size, raylib.WHITE);
@@ -61,9 +60,10 @@ pub fn main() !void {
                 game_state.status = Status.GAME_OVER;
                 break;
             }
-            letter.position.x -= 0.11; // TODO: make safe
+            letter.position.x -= 0.15; // TODO: make safe
             if (raylib.IsKeyPressed(letterToKey(letter.value[0]))) {
                 letter.was_killed = true;
+                raylib.PlaySound(punchSound);
                 break;
             }
         }
