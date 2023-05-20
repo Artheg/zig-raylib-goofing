@@ -12,9 +12,9 @@ const Vector2 = raylib.Vector2;
 
 const Letter = struct { value: [2:0]u8, index: u8, position: Vector2, was_killed: bool, damage: u8, speed: f32, is_dead: bool };
 const letter_count = 15;
-const font_size = 25;
-const screen_width = 640;
-const screen_height = 480;
+const font_size = 25; // TODO: font_size must be relative to aspect ratio
+const screen_width = 1280;
+const screen_height = 720;
 
 const alphabet = "abcdefghijklmnopqrstuvwxyz";
 pub fn main() !void {
@@ -24,8 +24,8 @@ pub fn main() !void {
     const random = prng.random();
 
     raylib.InitAudioDevice();
-    raylib.InitWindow(640, 480, "__MF");
-    raylib.SetWindowPosition(960, 1200);
+    raylib.InitWindow(screen_width, screen_width, "__MF");
+    raylib.SetWindowPosition(740, 850);
 
     var i: usize = 0;
     var letters: [letter_count]Letter = undefined;
@@ -60,8 +60,8 @@ pub fn main() !void {
                 game_state.status = Status.GAME_OVER;
                 break;
             }
-            letter.position.x -= 0.15; // TODO: make safe
-            if (raylib.IsKeyPressed(letterToKey(letter.value[0]))) {
+            letter.position.x -= letter.speed; // TODO: make safe
+            if (raylib.IsKeyPressed(letterToKey(letter.value[0]))) { // TODO: check if 'nearest'
                 letter.was_killed = true;
                 raylib.PlaySound(punchSound);
                 break;
@@ -98,6 +98,7 @@ fn createRandomLetters(letters: *[letter_count]Letter, random: std.rand.Random) 
         letter_struct.damage = 1;
         letter_struct.position.x = screen_width - @intToFloat(f32, font_size);
         letter_struct.position.y = @intToFloat(f32, i * font_size);
+        letter_struct.speed = random.float(f32) * 0.01;
     }
 }
 
