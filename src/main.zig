@@ -32,7 +32,7 @@ pub fn main() !void {
     raylib.SetWindowPosition(740, 850);
 
     var i: usize = 0;
-    var letters: [letter_count]types.Letter = undefined;
+    var letters: []types.Letter = undefined;
     while (i < letter_count) : (i += 1) {
         letters[i] = std.mem.zeroes(types.Letter);
     }
@@ -54,7 +54,8 @@ pub fn main() !void {
             continue;
         }
 
-        for (&letters) |*letter| {
+        for (letters, 0..letters.len) |*letter, idx| {
+            std.debug.print("i {}", .{idx});
             if (letter.was_killed) continue;
             if (letter.position.x <= 0.0) {
                 game_state.hp -= letter.damage;
@@ -72,7 +73,7 @@ pub fn main() !void {
             }
         }
 
-        for (&letters) |*letter| {
+        for (letters) |*letter| {
             if (letter.was_killed) continue;
             // raylib.DrawText(&letter.value, letter.x, letter.y, font_size, raylib.WHITE);
             raylib.DrawTextEx(raylib.GetFontDefault(), &letter.value, letter.position, config.font_size, 0.0, raylib.WHITE);
