@@ -3,12 +3,14 @@ const std = @import("std");
 const types = @import("types.zig");
 const config = @import("config.zig");
 
-pub fn createRandomLetters(letters: *[]const types.Letter, random: std.rand.Random) void {
-    for (letters, 0..letters.len) |*letter_struct, i| {
-        const letter_index = random.uintAtMost(u8, config.alphabet.len - 1);
-        const str = [2:0]u8{ config.alphabet[letter_index], 0 };
+pub fn createRandomLetters(letters: *[config.letter_count]types.Letter, random: std.rand.Random) void {
+    var i: u32 = 0;
+    while (i < config.letter_count) : (i + 1) {
+        const alphabet_index = random.uintAtMost(u8, config.alphabet.len - 1);
+        const str = [2:0]u8{ config.alphabet[alphabet_index], 0 };
+        const letter_struct = letters[i];
         letter_struct.value = str;
-        letter_struct.index = letter_index;
+        letter_struct.index = alphabet_index;
         letter_struct.was_killed = false;
         letter_struct.damage = 1;
         letter_struct.position.x = config.screen_width - @intToFloat(f32, config.font_size);

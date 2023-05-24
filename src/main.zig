@@ -19,8 +19,6 @@ const GameState = struct {
 };
 const Vector2 = raylib.Vector2;
 
-const letter_count = 15;
-
 pub fn main() !void {
     var game_state = GameState{ .status = Status.PLAYING, .hp = 200 };
 
@@ -33,7 +31,7 @@ pub fn main() !void {
 
     var i: usize = 0;
     var letters: []types.Letter = undefined;
-    while (i < letter_count) : (i += 1) {
+    while (i < config.max_letters) : (i += 1) {
         letters[i] = std.mem.zeroes(types.Letter);
     }
     var buf: [8]u8 = undefined;
