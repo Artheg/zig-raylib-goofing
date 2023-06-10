@@ -30,15 +30,16 @@ pub fn main() !void {
     raylib.SetWindowPosition(740, 850);
 
     var i: usize = 0;
-    var letters: []types.Letter = undefined;
+    var letters: [config.max_letters]types.Letter = undefined;
     while (i < config.max_letters) : (i += 1) {
         letters[i] = std.mem.zeroes(types.Letter);
     }
     var buf: [8]u8 = undefined;
     var fba = std.heap.FixedBufferAllocator.init(&buf); // allocators?
     // https://www.youtube.com/watch?v=vHWiDx_l4V0
-    utils.createRandomLetters(&letters, random);
+    utils.createRandomLetters(&letters[0..config.letter_count], random);
     const punchSound = raylib.LoadSound("assets/sounds/punch_2.mp3");
+
     while (!raylib.WindowShouldClose()) {
         raylib.BeginDrawing();
 
@@ -52,7 +53,7 @@ pub fn main() !void {
             continue;
         }
 
-        for (letters, 0..letters.len) |*letter, idx| {
+        for (&letters, 0..letters.len) |*letter, idx| {
             std.debug.print("i {}", .{idx});
             if (letter.was_killed) continue;
             if (letter.position.x <= 0.0) {
@@ -71,7 +72,7 @@ pub fn main() !void {
             }
         }
 
-        for (letters) |*letter| {
+        for (&letters) |*letter| {
             if (letter.was_killed) continue;
             // raylib.DrawText(&letter.value, letter.x, letter.y, font_size, raylib.WHITE);
             raylib.DrawTextEx(raylib.GetFontDefault(), &letter.value, letter.position, config.font_size, 0.0, raylib.WHITE);
@@ -83,8 +84,9 @@ pub fn main() !void {
         const task_complete = for (letters) |letter| {
             if (!letter.was_killed) break false;
         } else true;
+
         if (task_complete) {
-            utils.createRandomLetters(&letters, random);
+            utils.createRandomLetters(&letters[0..config.letter_count], random);
         }
     }
     raylib.CloseWindow();
