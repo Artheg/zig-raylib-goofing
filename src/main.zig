@@ -1,95 +1,105 @@
 const std = @import("std");
 
 const raylib = @import("raylib");
+
+const gameplay = @import("gameplay.zig");
+const game_over = @import("game_over.zig");
+
 const utils = @import("utils.zig");
+
 const types = @import("types.zig");
+const Status = types.Status;
+const Letter = types.Letter;
+const Resources = types.Resources;
+const Model = types.Model;
+
 const config = @import("config.zig");
+const sound = @import("sound.zig");
 const KeyboardKey = raylib.KeyboardKey;
 
 var x: i32 = 320;
 var y: i32 = 240;
 
-const Status = enum { PLAYING, GAME_OVER, MENU };
-const GameState = struct {
-    hp: u8,
-    status: Status,
-    pub fn render() void {
-        std.debug.print("RENDER", .{});
-    }
-};
 const Vector2 = raylib.Vector2;
 
+var model: Model = std.mem.zeroes(Model);
+
 pub fn main() !void {
-    var game_state = GameState{ .status = Status.PLAYING, .hp = 200 };
+    gameplay.init();
+    init_model();
 
-    var prng = std.rand.DefaultPrng.init(@intCast(u64, std.time.nanoTimestamp()));
-    const random = prng.random();
-
-    raylib.InitAudioDevice();
     raylib.InitWindow(config.screen_width, config.screen_width, "__MF");
     raylib.SetWindowPosition(740, 850);
 
-    var i: usize = 0;
-    var letters: [config.max_letters]types.Letter = undefined;
-    while (i < config.max_letters) : (i += 1) {
-        letters[i] = std.mem.zeroes(types.Letter);
-    }
-    var buf: [8]u8 = undefined;
-    var fba = std.heap.FixedBufferAllocator.init(&buf); // allocators?
-    // https://www.youtube.com/watch?v=vHWiDx_l4V0
-    utils.createRandomLetters(&letters[0..config.letter_count], random);
-    const punchSound = raylib.LoadSound("assets/sounds/punch_2.mp3");
+    raylib.InitAudioDevice();
+    const resources = Resources{ .musicMap = sound.loadMusic(), .soundMap = sound.loadSounds() };
+
+    raylib.PlayMusicStream(resources.musicMap.LVL_01);
 
     while (!raylib.WindowShouldClose()) {
+        update_model();
+        switch (model.status) {
+            Status.PLAYING => gameplay.pre_render(),
+            else => noop(model.status),
+        }
+
         raylib.BeginDrawing();
-
-        fba.reset();
-        raylib.DrawText(try raylib.TextFormat(fba.allocator(), "HP: {d}", .{game_state.hp}), 0, 0, config.font_size, raylib.WHITE);
-
-        if (game_state.status == Status.GAME_OVER) {
-            raylib.ClearBackground(raylib.DARKBLUE);
-            raylib.DrawText("GAME OVER", config.screen_width / 2, config.screen_height / 2, config.font_size, raylib.WHITE);
-            raylib.EndDrawing();
-            continue;
+        // gameplay.render();
+        raylib.ClearBackground(raylib.BLACK);
+        switch (model.status) {
+            Status.GAME_OVER => game_over.render(),
+            Status.PLAYING => gameplay.render(model, resources),
+            Status.MENU => game_over.render(),
         }
-
-        for (&letters, 0..letters.len) |*letter, idx| {
-            std.debug.print("i {}", .{idx});
-            if (letter.was_killed) continue;
-            if (letter.position.x <= 0.0) {
-                game_state.hp -= letter.damage;
-                letter.was_killed = true; // TODO: other flag
-            }
-            if (game_state.hp <= 0) {
-                game_state.status = Status.GAME_OVER;
-                break;
-            }
-            letter.position.x -= letter.speed; // TODO: make safe
-            if (raylib.IsKeyPressed(utils.letterToKey(letter.value[0]))) { // TODO: check if 'nearest'
-                letter.was_killed = true;
-                raylib.PlaySound(punchSound);
-                break;
-            }
-        }
-
-        for (&letters) |*letter| {
-            if (letter.was_killed) continue;
-            // raylib.DrawText(&letter.value, letter.x, letter.y, font_size, raylib.WHITE);
-            raylib.DrawTextEx(raylib.GetFontDefault(), &letter.value, letter.position, config.font_size, 0.0, raylib.WHITE);
-        }
-
-        raylib.ClearBackground(raylib.DARKBLUE);
         raylib.EndDrawing();
 
-        const task_complete = for (letters) |letter| {
-            if (!letter.was_killed) break false;
-        } else true;
-
-        if (task_complete) {
-            utils.createRandomLetters(&letters[0..config.letter_count], random);
+        switch (model.status) {
+            Status.PLAYING => gameplay.post_render(),
+            else => noop(model.status),
         }
     }
     raylib.CloseWindow();
+}
+
+fn init_model() void {
+    model.hp = 200;
+    model.status = Status.PLAYING;
+    var prng = std.rand.DefaultPrng.init(@intCast(std.time.nanoTimestamp()));
+    var random = prng.random();
+    var i: usize = 0;
+    model.letters = std.mem.zeroes([config.letter_count]types.Letter);
+    while (i < config.letter_count) : (i += 1) {
+        model.letters[i] = std.mem.zeroes(types.Letter);
+    }
+    // https://www.youtube.com/watch?v=vHWiDx_l4V0
+    utils.createRandomLetters(&model.letters[0..config.letter_count], random);
+}
+
+fn update_model() void {
+    const letters = &model.letters;
+    for (letters) |*letter| {
+        // std.debug.print("i {}", .{idx});
+        if (letter.was_killed) continue;
+        if (letter.position.x <= 0.0) {
+            model.hp -= letter.damage;
+            letter.was_killed = true; // TODO: other flag
+        }
+        if (model.hp <= 0) {
+            model.status = Status.GAME_OVER;
+            break;
+        }
+
+        letter.position.x -= letter.speed;
+        if (raylib.IsKeyPressed(utils.letterToKey(letter.value[0]))) { // TODO: check if 'nearest'
+            // letter.was_killed = true;
+            // raylib.PlaySound(data.soundMap.PUNCH_2);
+            break;
+        }
+    }
+}
+
+fn noop(status: Status) void {
+    std.debug.print("Status: {}", .{status});
 }
 
 fn switchGameState(status: Status) void {
