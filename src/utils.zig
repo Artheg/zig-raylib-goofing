@@ -28,3 +28,8 @@ pub fn letterToKey(letter: u8) raylib.KeyboardKey {
     }
     return @enumFromInt(result);
 }
+
+pub fn get_random() std.rand.Random {
+    var prng = std.rand.DefaultPrng.init(@intCast(std.time.nanoTimestamp()));
+    return prng.random();
+}

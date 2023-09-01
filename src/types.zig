@@ -10,7 +10,14 @@ pub const GameState = struct {
 
 pub const DialogueLine = struct { character: [:0]u8, text: [:0]u8, audio: raylib.Music };
 
-pub const Model = struct { hp: u8, status: Status, letters: [config.letter_count]Letter };
+pub const Model = struct {
+    hp: u8,
+    status: Status,
+    letters: [config.letter_count]Letter,
+    pub fn changeStatus(self: *Model, status: Status) void {
+        self.status = status;
+    }
+};
 
 pub const Resources = struct { musicMap: sound.MusicMap, soundMap: sound.SoundMap };
 
